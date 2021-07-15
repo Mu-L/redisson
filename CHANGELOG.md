@@ -3,6 +3,37 @@ Redisson Releases History
 
 Consider __[Redisson PRO](https://redisson.pro)__ version for **ultra-fast performance** and **support by SLA**.
 
+### 28-Jun-2021 - 3.16.0 released
+Feature - GraalVM native-image support  
+Feature - Spring Data Redis 2.5.x support  
+Feature - [Helidon CDI](https://github.com/redisson/redisson/tree/master/redisson-helidon) integration  
+Feature - [Quarkus](https://github.com/redisson/redisson/tree/master/redisson-quarkus) integration  
+Feature - [Micronaut](https://github.com/redisson/redisson/tree/master/redisson-micronaut) integration  
+Feature - data partitioning support for JCache  
+
+Fixed - Live Object `Conditions.in()` aren't considered if defined in `Conditions.and()` clause  
+Fixed - Redisson shutdown takes much time after `RBatch` execution  
+Fixed - `RBatch` object in REDIS_WRITE_ATOMIC or REDIS_READ_ATOMIC mode can be corrupted by PING command  
+Fixed - `RKeysReactive.getKeysByPattern()` method returns wrong result  
+Fixed - `RExpirable.expire(Instant)` method doesn't work for RBloomFilter, RBoundedBlockingQueue, RDelayedQueue, RLock, RIdGenerator, RMultimap, RMapCache, RPriorityQueue, RRateLimiter, RReliableTopic, RSetMultimap, RTimeSeries objects  
+Fixed - `RBlockingDequeReactive.takeElements()` method does not consume all elements  
+Fixed - `RScheduledExecutorService` stops to work if task timeout occurred  
+Fixed - `RedissonReactiveSubscription` removes listener after first 32 messages  
+Fixed - `RedisNodeNotFoundException` is thrown after cluster failover (thanks to @UzimakiNaruto)  
+
+### 07-Jun-2021 - 3.15.6 released
+
+Fixed - `RedisSentinel.getMaster()` method throws NPE  
+Fixed - `RSemaphore.drainPermits()` throws `ClassCastException`  
+Fixed - missed implementation of few methods in Spring Data's RedissonConnection  
+Fixed - `RLocalCachedMap.containsKey()` method doesn't invoke map loader  
+Fixed - `RSemaphore` permits can't be acquired due to "Maximum permit count exceeded" error  
+Fixed - `RedissonNode` unable to start due to `ClassNotFoundException`  
+Fixed - SENTINEL SENTINELS command timeout (thanks to @zhwq1216)  
+Fixed - `JCachingProvider` shouldn't depend on class from Jackson 2.12.x  
+Fixed - `JCache.get()` method swallows Redis errors  
+Fixed - `RLocalCachedMap` doesn't used MapLoader if storeMode = LOCALCACHE  
+
 ### 12-May-2021 - 3.15.5 released
 
 Feature - `discard()` method added to `RBatch` object  
