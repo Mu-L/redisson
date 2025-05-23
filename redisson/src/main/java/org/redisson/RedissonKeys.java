@@ -37,7 +37,6 @@ import org.redisson.client.protocol.decoder.ListScanResultReplayDecoder;
 import org.redisson.client.protocol.decoder.ObjectListReplayDecoder;
 import org.redisson.command.CommandAsyncExecutor;
 import org.redisson.command.CommandBatchService;
-import org.redisson.config.Protocol;
 import org.redisson.connection.ConnectionManager;
 import org.redisson.connection.MasterSlaveEntry;
 import org.redisson.iterator.BaseAsyncIterator;
@@ -636,7 +635,7 @@ public final class RedissonKeys implements RKeys {
             return addListenerAsync("__keyevent@*:del", (DeletedObjectListener) listener, DeletedObjectListener::onDeleted);
         }
         if (listener instanceof FlushListener) {
-            if (commandExecutor.getServiceManager().getCfg().getProtocol() != Protocol.RESP3) {
+            if (!commandExecutor.getServiceManager().isResp3()) {
                 throw new IllegalStateException("`protocol` config setting should be set to RESP3 value");
             }
 

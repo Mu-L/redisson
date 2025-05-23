@@ -757,6 +757,17 @@ public final class Redisson implements RedissonClient {
     }
 
     @Override
+    public RVectorSet getVectorSet(String name) {
+        return new RedissonVectorSet(commandExecutor, name);
+    }
+
+    @Override
+    public RVectorSet getVectorSet(CommonOptions options) {
+        CommonParams params = (CommonParams) options;
+        return new RedissonVectorSet(commandExecutor.copy(params), params.getName());
+    }
+
+    @Override
     public RScheduledExecutorService getExecutorService(String name) {
         return getExecutorService(name, connectionManager.getServiceManager().getCfg().getCodec());
     }
@@ -900,19 +911,19 @@ public final class Redisson implements RedissonClient {
 
     @Override
     public RReliableTopic getReliableTopic(String name) {
-        return new RedissonReliableTopic(commandExecutor, name, null);
+        return new RedissonReliableTopic(commandExecutor, name);
     }
 
     @Override
     public RReliableTopic getReliableTopic(String name, Codec codec) {
-        return new RedissonReliableTopic(codec, commandExecutor, name, null);
+        return new RedissonReliableTopic(codec, commandExecutor, name);
     }
 
     @Override
     public RReliableTopic getReliableTopic(PlainOptions options) {
         PlainParams params = (PlainParams) options;
         return new RedissonReliableTopic(params.getCodec(),
-                commandExecutor.copy(params), params.getName(), null);
+                commandExecutor.copy(params), params.getName());
     }
 
     @Override

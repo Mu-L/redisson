@@ -498,7 +498,7 @@ public class CommandAsyncService implements CommandAsyncExecutor {
     }
 
     private static String trunc(String input) {
-        final int maxLength = 11;
+        final int maxLength = 200;
 
         if (input == null) {
             return null;
@@ -1080,7 +1080,8 @@ public class CommandAsyncService implements CommandAsyncExecutor {
 
                 for (String msg : msgs) {
                     for (String command : commands) {
-                        if (msg.contains("`" + command + "`")) {
+                        if (msg.startsWith("ERR unknown command")
+                                && msg.toUpperCase().contains(command)) {
                             commands.remove(command);
                             break;
                         }

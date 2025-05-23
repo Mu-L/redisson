@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.redisson</groupId>
         <artifactId>redisson-parent</artifactId>
-        <version>3.46.1-SNAPSHOT</version>
+        <version>3.47.1-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -19,6 +19,7 @@
         <module>redisson-hibernate-52</module>
         <module>redisson-hibernate-53</module>
         <module>redisson-hibernate-6</module>
+        <module>redisson-hibernate-7</module>
     </modules>
 
     <build>

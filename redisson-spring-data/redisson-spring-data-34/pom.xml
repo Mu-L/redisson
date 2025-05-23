@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.redisson</groupId>
         <artifactId>redisson-spring-data</artifactId>
-        <version>3.46.1-SNAPSHOT</version>
+        <version>3.47.1-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -59,7 +59,7 @@
                     <archive>  
                         <manifestEntries>
                             <Build-Time>${maven.build.timestamp}</Build-Time>
-                            <Automatic-Module-Name>redisson.spring.data27</Automatic-Module-Name>
+                            <Automatic-Module-Name>redisson.spring.data34</Automatic-Module-Name>
                         </manifestEntries>
                     </archive> 
                 </configuration>

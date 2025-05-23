@@ -1220,15 +1220,20 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
     Collection<V> readAll();
 
     /**
+     * Use {@link #intersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets 
      * and store result to current ScoredSortedSet
      * 
      * @param names - names of ScoredSortedSet
      * @return length of intersection
      */
+    @Deprecated
     int intersection(String... names);
 
     /**
+     * Use {@link #intersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets with defined aggregation method 
      * and store result to current ScoredSortedSet
      * 
@@ -1236,18 +1241,24 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param names - names of ScoredSortedSet
      * @return length of intersection
      */
+    @Deprecated
     int intersection(Aggregate aggregate, String... names);
 
     /**
+     * Use {@link #intersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets mapped to weight multiplier 
      * and store result to current ScoredSortedSet
      * 
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return length of intersection
      */
+    @Deprecated
     int intersection(Map<String, Double> nameWithWeight);
 
     /**
+     * Use {@link #intersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets mapped to weight multiplier 
      * with defined aggregation method 
      * and store result to current ScoredSortedSet
@@ -1256,9 +1267,22 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return length of intersection
      */
+    @Deprecated
     int intersection(Aggregate aggregate, Map<String, Double> nameWithWeight);
-
+    
     /**
+     * Intersect provided ScoredSortedSets mapped to weight multiplier
+     * with defined aggregation method
+     * and store result to current ScoredSortedSet
+     *
+     * @param args object
+     * @return length of intersection
+     */
+    int intersection(SetIntersectionArgs args);
+    
+    /**
+     * Use {@link #readIntersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets
      * with current ScoredSortedSet without state change
      * <p>
@@ -1267,9 +1291,12 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param names - names of ScoredSortedSet
      * @return result of intersection
      */
+    @Deprecated
     Collection<V> readIntersection(String... names);
 
     /**
+     * Use {@link #readIntersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets with current ScoredSortedSet using defined aggregation method
      * without state change
      * <p>
@@ -1279,9 +1306,12 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param names - names of ScoredSortedSet
      * @return result of intersection
      */
+    @Deprecated
     Collection<V> readIntersection(Aggregate aggregate, String... names);
 
     /**
+     * Use {@link #readIntersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets mapped to weight multiplier
      * with current ScoredSortedSet without state change
      * <p>
@@ -1290,6 +1320,7 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return result of intersection
      */
+    @Deprecated
     Collection<V> readIntersection(Map<String, Double> nameWithWeight);
 
     /**
@@ -1314,6 +1345,8 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
     Integer countIntersection(int limit, String... names);
 
     /**
+     * Use {@link #readIntersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets mapped to weight multiplier
      * with current ScoredSortedSet using defined aggregation method
      * without state change
@@ -1324,18 +1357,46 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return result of intersection
      */
+    @Deprecated
     Collection<V> readIntersection(Aggregate aggregate, Map<String, Double> nameWithWeight);
 
     /**
+     * Intersect provided ScoredSortedSets
+     * with current ScoredSortedSet
+     * <p>
+     * Requires <b>Redis 6.2.0 and higher.</b>
+     *
+     * @param args object
+     * @return result of intersection
+     */
+    Collection<V> readIntersection(SetIntersectionArgs args);
+
+    /**
+     * Intersect provided ScoredSortedSets
+     * with current ScoredSortedSet
+     * <p>
+     * Requires <b>Redis 6.2.0 and higher.</b>
+     *
+     * @param args object
+     * @return result of intersection entries (value and its score)
+     */
+    Collection<ScoredEntry<V>> readIntersectionEntries(SetIntersectionArgs args);
+
+    /**
+     * Use {@link #union(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets 
      * and store result to current ScoredSortedSet
      * 
      * @param names - names of ScoredSortedSet
      * @return length of union
      */
+    @Deprecated
     int union(String... names);
 
     /**
+     * Use {@link #union(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets with defined aggregation method 
      * and store result to current ScoredSortedSet
      * 
@@ -1343,18 +1404,24 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param names - names of ScoredSortedSet
      * @return length of union
      */
+    @Deprecated
     int union(Aggregate aggregate, String... names);
 
     /**
+     * Use {@link #union(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets mapped to weight multiplier 
      * and store result to current ScoredSortedSet
      * 
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return length of union
      */
+    @Deprecated
     int union(Map<String, Double> nameWithWeight);
 
     /**
+     * Use {@link #union(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets mapped to weight multiplier 
      * with defined aggregation method 
      * and store result to current ScoredSortedSet
@@ -1363,9 +1430,22 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return length of union
      */
+    @Deprecated
     int union(Aggregate aggregate, Map<String, Double> nameWithWeight);
-
+    
     /**
+     * Union provided ScoredSortedSets mapped to weight multiplier
+     * with defined aggregation method
+     * and store result to current ScoredSortedSet
+     *
+     * @param args object
+     * @return length of union
+     */
+    int union(SetUnionArgs args);
+    
+    /**
+     * Use {@link #readUnion(SetUnionArgs)} instead.
+     * <p>
      * Union ScoredSortedSets specified by name with current ScoredSortedSet
      * without state change.
      * <p>
@@ -1374,9 +1454,12 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param names - names of ScoredSortedSet
      * @return result of union
      */
+    @Deprecated
     Collection<V> readUnion(String... names);
 
     /**
+     * Use {@link #readUnion(SetUnionArgs)} instead.
+     * <p>
      * Union ScoredSortedSets specified by name with defined aggregation method
      * and current ScoredSortedSet without state change.
      * <p>
@@ -1386,9 +1469,12 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param names - names of ScoredSortedSet
      * @return result of union
      */
+    @Deprecated
     Collection<V> readUnion(Aggregate aggregate, String... names);
 
     /**
+     * Use {@link #readUnion(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets mapped to weight multiplier
      * and current ScoredSortedSet without state change.
      * <p>
@@ -1397,9 +1483,12 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return result of union
      */
+    @Deprecated
     Collection<V> readUnion(Map<String, Double> nameWithWeight);
 
     /**
+     * Use {@link #readUnion(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets mapped to weight multiplier
      * with defined aggregation method
      * and current ScoredSortedSet without state change
@@ -1410,7 +1499,32 @@ public interface RScoredSortedSet<V> extends RScoredSortedSetAsync<V>, Iterable<
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return result of union
      */
+    @Deprecated
     Collection<V> readUnion(Aggregate aggregate, Map<String, Double> nameWithWeight);
+
+    /**
+     * Union provided ScoredSortedSets mapped to weight multiplier
+     * with defined aggregation method
+     * and current ScoredSortedSet without state change
+     * <p>
+     * Requires <b>Redis 6.2.0 and higher.</b>
+     *
+     * @param args object
+     * @return result of union
+     */
+    Collection<V> readUnion(SetUnionArgs args);
+
+    /**
+     * Union provided ScoredSortedSets mapped to weight multiplier
+     * with defined aggregation method
+     * and current ScoredSortedSet without state change
+     * <p>
+     * Requires <b>Redis 6.2.0 and higher.</b>
+     *
+     * @param args object
+     * @return result of union entries (value and its score)
+     */
+    Collection<ScoredEntry<V>> readUnionEntries(SetUnionArgs args);
 
     /**
      * Diff ScoredSortedSets specified by name
