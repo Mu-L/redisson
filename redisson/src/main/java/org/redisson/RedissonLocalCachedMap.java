@@ -112,11 +112,8 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
         return localCacheView;
     }
 
-    private void broadcastLocalCacheStore(V value, ByteBuf mapKey, CacheKey cacheKey) {
-        if (storeMode != LocalCachedMapOptions.StoreMode.LOCALCACHE) {
-            return;
-        }
-
+    private CompletionStage<Void> broadcastLocalCacheStore(V value, ByteBuf mapKey, CacheKey cacheKey) {
+        CompletionStage<Void> f = CompletableFuture.completedFuture(null);
         if (invalidateEntryOnChange != 0) {
             Object msg;
             if (syncStrategy == SyncStrategy.UPDATE) {
@@ -126,9 +123,10 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
             } else {
                 msg = new LocalCachedMapInvalidate(instanceId, cacheKey.getKeyHash());
             }
-            listener.publishAsync(msg);
+            f = listener.publishAsync(msg).thenApply(r -> null);
         }
         mapKey.release();
+        return f;
     }
 
     private CacheValue cachePut(CacheKey cacheKey, Object key, Object value) {
@@ -333,14 +331,15 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
         ByteBuf mapKey = encodeMapKey(key);
         CacheKey cacheKey = localCacheView.toCacheKey(mapKey);
         CacheValue prevValue = cachePut(cacheKey, key, value);
-        broadcastLocalCacheStore(value, mapKey, cacheKey);
 
         if (storeMode == LocalCachedMapOptions.StoreMode.LOCALCACHE) {
-            V val = null;
-            if (prevValue != null) {
-                val = (V) prevValue.getValue();
-            }
-            return new CompletableFutureWrapper<>(val);
+            CompletionStage<V> f = broadcastLocalCacheStore(value, mapKey, cacheKey).thenApply(r -> {
+                if (prevValue != null) {
+                    return (V) prevValue.getValue();
+                }
+                return null;
+            });
+            return new CompletableFutureWrapper<>(f);
         }
 
         ByteBuf mapValue = encodeMapValue(value);
@@ -372,11 +371,13 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
     protected RFuture<Boolean> fastPutOperationAsync(K key, V value) {
         ByteBuf encodedKey = encodeMapKey(key);
         CacheKey cacheKey = localCacheView.toCacheKey(encodedKey);
-
         CacheValue prevValue = cachePut(cacheKey, key, value);
-        broadcastLocalCacheStore(value, encodedKey, cacheKey);
+
         if (storeMode == LocalCachedMapOptions.StoreMode.LOCALCACHE) {
-            return new CompletableFutureWrapper<>(prevValue == null);
+            CompletionStage<Boolean> f = broadcastLocalCacheStore(value, encodedKey, cacheKey).thenApply(r -> {
+                return prevValue == null;
+            });
+            return new CompletableFutureWrapper<>(f);
         }
 
         ByteBuf encodedValue = encodeMapValue(value);
@@ -418,13 +419,13 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
         if (storeMode == LocalCachedMapOptions.StoreMode.LOCALCACHE) {
             keyEncoded.release();
             LocalCachedMapInvalidate msg = new LocalCachedMapInvalidate(instanceId, cacheKey.getKeyHash());
-            listener.publishAsync(msg);
-
-            V val = null;
-            if (value != null) {
-                val = (V) value.getValue();
-            }
-            return new CompletableFutureWrapper<>(val);
+            CompletionStage<V> f = listener.publishAsync(msg).thenApply(r -> {
+                if (value != null) {
+                    return (V) value.getValue();
+                }
+                return null;
+            });
+            return new CompletableFutureWrapper<>(f);
         }
 
         byte[] entryId = generateLogEntryId(cacheKey.getKeyHash());
@@ -536,16 +537,22 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
     protected RFuture<Long> fastRemoveOperationAsync(K... keys) {
         if (storeMode == LocalCachedMapOptions.StoreMode.LOCALCACHE) {
             long count = 0;
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
             for (K k : keys) {
                 CacheKey cacheKey = localCacheView.toCacheKey(k);
                 CacheValue val = cacheRemove(cacheKey);
                 if (val != null) {
                     count++;
                     LocalCachedMapInvalidate msg = new LocalCachedMapInvalidate(instanceId, cacheKey.getKeyHash());
-                    listener.publishAsync(msg);
+                    CompletionStage<Void> f = listener.publishAsync(msg).thenApply(t -> null);
+                    futures.add(f.toCompletableFuture());
                 }
             }
-            return new CompletableFutureWrapper<>(count);
+
+            long c = count;
+            CompletableFuture<Long> ff = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .thenApply(r -> c);
+            return new CompletableFutureWrapper<>(ff);
         }
 
             if (invalidateEntryOnChange == 1) {
@@ -714,14 +721,23 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
     @Override
     protected RFuture<Void> putAllOperationAsync(Map<? extends K, ? extends V> map) {
         if (storeMode == LocalCachedMapOptions.StoreMode.LOCALCACHE) {
+            CompletionStage<Void> f = null;
             for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
                 ByteBuf keyEncoded = encodeMapKey(entry.getKey());
                 CacheKey cacheKey = localCacheView.toCacheKey(keyEncoded);
                 cachePut(cacheKey, entry.getKey(), entry.getValue());
 
-                broadcastLocalCacheStore(entry.getValue(), keyEncoded, cacheKey);
+                if (f == null) {
+                    f = broadcastLocalCacheStore(entry.getValue(), keyEncoded, cacheKey);
+                } else {
+                    f = f.thenCompose(r -> broadcastLocalCacheStore(entry.getValue(), keyEncoded, cacheKey));
+                }
             }
-            return new CompletableFutureWrapper((Void) null);
+            if (f == null) {
+                return new CompletableFutureWrapper<>((Void) null);
+            } else {
+                return new CompletableFutureWrapper<>(f);
+            }
         }
 
         List<Object> params = new ArrayList<Object>(map.size()*3);
@@ -827,10 +843,11 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
         ByteBuf encodedKey = encodeMapKey(key);
         CacheKey cacheKey = localCacheView.toCacheKey(encodedKey);
         if (storeMode == LocalCachedMapOptions.StoreMode.LOCALCACHE) {
-            CacheValue prevValue = cachePutIfAbsent(cacheKey, key, value);
+            CacheValue prevValue = cache.putIfAbsent(cacheKey, new CacheValue(key, value));
             if (prevValue == null) {
-                broadcastLocalCacheStore(value, encodedKey, cacheKey);
-                return new CompletableFutureWrapper<>(true);
+                CompletionStage<Boolean> f = broadcastLocalCacheStore(value, encodedKey, cacheKey)
+                                                    .thenApply(r -> true);
+                return new CompletableFutureWrapper<>(f);
             } else {
                 encodedKey.release();
                 return new CompletableFutureWrapper<>(false);
@@ -872,8 +889,8 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
         if (storeMode == LocalCachedMapOptions.StoreMode.LOCALCACHE) {
             CacheValue prevValue = cachePutIfExists(cacheKey, key, value);
             if (prevValue != null) {
-                broadcastLocalCacheStore(value, encodedKey, cacheKey);
-                return new CompletableFutureWrapper<>(true);
+                CompletionStage<Boolean> f = broadcastLocalCacheStore(value, encodedKey, cacheKey).thenApply(r -> true);
+                return new CompletableFutureWrapper<>(f);
             } else {
                 encodedKey.release();
                 return new CompletableFutureWrapper<>(false);
@@ -1066,8 +1083,8 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
             CacheKey cacheKey = localCacheView.toCacheKey(mapKey);
             CacheValue prevValue = cacheReplace(cacheKey, key, value);
             if (prevValue != null) {
-                broadcastLocalCacheStore(value, mapKey, cacheKey);
-                return new CompletableFutureWrapper<>(true);
+                CompletionStage<Boolean> f = broadcastLocalCacheStore(value, mapKey, cacheKey).thenApply(r -> true);
+                return new CompletableFutureWrapper<>(f);
             } else {
                 mapKey.release();
                 return new CompletableFutureWrapper<>(false);
@@ -1149,8 +1166,9 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
             CacheKey cacheKey = localCacheView.toCacheKey(mapKey);
             CacheValue prevValue = cacheReplace(cacheKey, key, value);
             if (prevValue != null) {
-                broadcastLocalCacheStore(value, mapKey, cacheKey);
-                return new CompletableFutureWrapper<>((V) prevValue.getValue());
+                CompletionStage<V> f = broadcastLocalCacheStore(value, mapKey, cacheKey)
+                        .thenApply(r -> (V) prevValue.getValue());
+                return new CompletableFutureWrapper<>(f);
             } else {
                 mapKey.release();
                 return new CompletableFutureWrapper((Void) null);
@@ -1201,8 +1219,8 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
             ByteBuf mapKey = encodeMapKey(key);
             CacheKey cacheKey = localCacheView.toCacheKey(mapKey);
             if (cacheReplace(cacheKey, key, oldValue, newValue)) {
-                broadcastLocalCacheStore(newValue, mapKey, cacheKey);
-                return new CompletableFutureWrapper<>(true);
+                CompletionStage<Boolean> f = broadcastLocalCacheStore(newValue, mapKey, cacheKey).thenApply(r -> true);
+                return new CompletableFutureWrapper<>(f);
             } else {
                 mapKey.release();
                 return new CompletableFutureWrapper<>(false);
@@ -1252,8 +1270,8 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
             ByteBuf mapKey = encodeMapKey(key);
             CacheKey cacheKey = localCacheView.toCacheKey(mapKey);
             if (cacheRemove(cacheKey, key, value)) {
-                broadcastLocalCacheStore((V) value, mapKey, cacheKey);
-                return new CompletableFutureWrapper<>(true);
+                CompletionStage<Boolean> f = broadcastLocalCacheStore((V) value, mapKey, cacheKey).thenApply(r -> true);
+                return new CompletableFutureWrapper<>(f);
             } else {
                 mapKey.release();
                 return new CompletableFutureWrapper<>(false);
@@ -1278,8 +1296,9 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
             CacheKey cacheKey = localCacheView.toCacheKey(mapKey);
             CacheValue prevValue = cachePutIfExists(cacheKey, key, value);
             if (prevValue != null) {
-                broadcastLocalCacheStore((V) value, mapKey, cacheKey);
-                return new CompletableFutureWrapper<>((V) prevValue.getValue());
+                CompletionStage<V> f = broadcastLocalCacheStore(value, mapKey, cacheKey)
+                        .thenApply(r -> (V) prevValue.getValue());
+                return new CompletableFutureWrapper<>(f);
             } else {
                 mapKey.release();
                 return new CompletableFutureWrapper((Void) null);
@@ -1304,8 +1323,9 @@ public class RedissonLocalCachedMap<K, V> extends RedissonMap<K, V> implements R
             CacheKey cacheKey = localCacheView.toCacheKey(mapKey);
             CacheValue prevValue = cachePutIfAbsent(cacheKey, key, value);
             if (prevValue == null) {
-                broadcastLocalCacheStore((V) value, mapKey, cacheKey);
-                return new CompletableFutureWrapper((Void) null);
+                CompletionStage f = broadcastLocalCacheStore(value, mapKey, cacheKey)
+                        .thenApply(r -> null);
+                return new CompletableFutureWrapper<>(f);
             } else {
                 mapKey.release();
                 return new CompletableFutureWrapper<>((V) prevValue.getValue());

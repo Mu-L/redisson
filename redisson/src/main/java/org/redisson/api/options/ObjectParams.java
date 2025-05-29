@@ -15,6 +15,8 @@
  */
 package org.redisson.api.options;
 
+import org.redisson.config.DelayStrategy;
+
 /**
  *
  * @author Nikita Koksharov
@@ -26,7 +28,7 @@ public interface ObjectParams {
 
     int getRetryAttempts();
 
-    int getRetryInterval();
+    DelayStrategy getRetryDelay();
 
 
 }

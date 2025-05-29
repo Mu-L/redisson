@@ -14,10 +14,7 @@ import org.redisson.client.RedisResponseTimeoutException;
 import org.redisson.client.codec.IntegerCodec;
 import org.redisson.client.codec.LongCodec;
 import org.redisson.client.codec.StringCodec;
-import org.redisson.config.Config;
-import org.redisson.config.Protocol;
-import org.redisson.config.ReadMode;
-import org.redisson.config.SubscriptionMode;
+import org.redisson.config.*;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
@@ -114,6 +111,24 @@ public class RedissonBucketTest extends RedisDockerTest {
         });
 
         rs.shutdown();
+    }
+
+    @Test
+    public void testRenameInCluster2() {
+        testInCluster(rc -> {
+            RBucket<String> b = rc.getBucket("{abc}alpha");
+            b.set("123");
+
+            RBatch rb = rc.createBatch(BatchOptions.defaults().sync(1, Duration.ofSeconds(1)));
+            RBucketAsync<Object> b2 = rb.getBucket("{abc}alpha");
+            b2.renameAsync("{abc}beta");
+            rb.execute();
+
+            RBucket<String> bs = rc.getBucket("{abc}beta");
+            assertThat(bs.get()).isEqualTo("123");
+
+            assertThat(rc.getKeys().count()).isEqualTo(1);
+        });
     }
 
     @Test
@@ -635,7 +650,7 @@ public class RedissonBucketTest extends RedisDockerTest {
         Config config = createConfig(redis);
         config.useSingleServer()
                 .setRetryAttempts(3)
-                .setRetryInterval(0);
+                .setRetryDelay(new ConstantDelay(Duration.ZERO));
         RedissonClient rc = Redisson.create(config);
 
         List<String> args = new ArrayList<>();

@@ -1061,15 +1061,20 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
     Mono<Integer> revRangeTo(String destName, double startScore, boolean startScoreInclusive, double endScore, boolean endScoreInclusive, int offset, int count);
 
     /**
+     * Use {@link #intersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets 
      * and store result to current ScoredSortedSet
      * 
      * @param names - names of ScoredSortedSet
      * @return length of intersection
      */
+    @Deprecated
     Mono<Integer> intersection(String... names);
 
     /**
+     * Use {@link #intersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets with defined aggregation method 
      * and store result to current ScoredSortedSet
      * 
@@ -1077,18 +1082,24 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param names - names of ScoredSortedSet
      * @return length of intersection
      */
+    @Deprecated
     Mono<Integer> intersection(Aggregate aggregate, String... names);
 
     /**
+     * Use {@link #intersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets mapped to weight multiplier 
      * and store result to current ScoredSortedSet
      * 
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return length of intersection
      */
+    @Deprecated
     Mono<Integer> intersection(Map<String, Double> nameWithWeight);
 
     /**
+     * Use {@link #intersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets mapped to weight multiplier 
      * with defined aggregation method 
      * and store result to current ScoredSortedSet
@@ -1097,9 +1108,22 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return length of intersection
      */
+    @Deprecated
     Mono<Integer> intersection(Aggregate aggregate, Map<String, Double> nameWithWeight);
+    
+    /**
+     * Intersect provided ScoredSortedSets mapped to weight multiplier
+     * with defined aggregation method
+     * and store result to current ScoredSortedSet
+     *
+     * @param args object
+     * @return length of intersection
+     */
+    Mono<Integer> intersection(SetIntersectionArgs args);
 
     /**
+     * Use {@link #readIntersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets
      * with current ScoredSortedSet without state change
      * <p>
@@ -1108,9 +1132,12 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param names - names of ScoredSortedSet
      * @return result of intersection
      */
+    @Deprecated
     Mono<Collection<V>> readIntersection(String... names);
 
     /**
+     * Use {@link #readIntersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets with current ScoredSortedSet using defined aggregation method
      * without state change
      * <p>
@@ -1120,9 +1147,12 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param names - names of ScoredSortedSet
      * @return result of intersection
      */
+    @Deprecated
     Mono<Collection<V>> readIntersection(Aggregate aggregate, String... names);
 
     /**
+     * Use {@link #readIntersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets mapped to weight multiplier
      * with current ScoredSortedSet without state change
      * <p>
@@ -1131,9 +1161,12 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return result of intersection
      */
+    @Deprecated
     Mono<Collection<V>> readIntersection(Map<String, Double> nameWithWeight);
 
     /**
+     * Use {@link #readIntersection(SetIntersectionArgs)} instead.
+     * <p>
      * Intersect provided ScoredSortedSets mapped to weight multiplier
      * with current ScoredSortedSet using defined aggregation method
      * without state change
@@ -1144,7 +1177,30 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return result of intersection
      */
+    @Deprecated
     Mono<Collection<V>> readIntersection(Aggregate aggregate, Map<String, Double> nameWithWeight);
+
+    /**
+     * Intersect provided ScoredSortedSets
+     * with current ScoredSortedSet
+     * <p>
+     * Requires <b>Redis 6.2.0 and higher.</b>
+     *
+     * @param args object
+     * @return result of intersection
+     */
+    Mono<Collection<V>> readIntersection(SetIntersectionArgs args);
+
+    /**
+     * Intersect provided ScoredSortedSets
+     * with current ScoredSortedSet
+     * <p>
+     * Requires <b>Redis 6.2.0 and higher.</b>
+     *
+     * @param args object
+     * @return result of intersection entries (value and its score)
+     */
+    Mono<Collection<ScoredEntry<V>>> readIntersectionEntries(SetIntersectionArgs args);
 
     /**
      * Counts elements of set as a result of sets intersection with current set.
@@ -1168,15 +1224,20 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
     Mono<Integer> countIntersection(int limit, String... names);
 
     /**
+     * Use {@link #union(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets 
      * and store result to current ScoredSortedSet
      * 
      * @param names - names of ScoredSortedSet
      * @return length of union
      */
+    @Deprecated
     Mono<Integer> union(String... names);
 
     /**
+     * Use {@link #union(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets with defined aggregation method 
      * and store result to current ScoredSortedSet
      * 
@@ -1184,18 +1245,24 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param names - names of ScoredSortedSet
      * @return length of union
      */
+    @Deprecated
     Mono<Integer> union(Aggregate aggregate, String... names);
 
     /**
+     * Use {@link #union(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets mapped to weight multiplier 
      * and store result to current ScoredSortedSet
      * 
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return length of union
      */
+    @Deprecated
     Mono<Integer> union(Map<String, Double> nameWithWeight);
 
     /**
+     * Use {@link #union(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets mapped to weight multiplier 
      * with defined aggregation method 
      * and store result to current ScoredSortedSet
@@ -1204,9 +1271,21 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return length of union
      */
+    @Deprecated
     Mono<Integer> union(Aggregate aggregate, Map<String, Double> nameWithWeight);
-
+    
     /**
+     * Union provided ScoredSortedSets mapped to weight multiplier
+     * with defined aggregation method
+     * and store result to current ScoredSortedSet
+     *
+     * @param args object
+     * @return length of union
+     */
+    Mono<Integer> union(SetUnionArgs args);
+    /**
+     * Use {@link #readUnion(SetUnionArgs)} instead.
+     * <p>
      * Union ScoredSortedSets specified by name with current ScoredSortedSet
      * without state change.
      * <p>
@@ -1215,9 +1294,12 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param names - names of ScoredSortedSet
      * @return result of union
      */
+    @Deprecated
     Mono<Collection<V>> readUnion(String... names);
 
     /**
+     * Use {@link #readUnion(SetUnionArgs)} instead.
+     * <p>
      * Union ScoredSortedSets specified by name with defined aggregation method
      * and current ScoredSortedSet without state change.
      * <p>
@@ -1227,9 +1309,12 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param names - names of ScoredSortedSet
      * @return result of union
      */
+    @Deprecated
     Mono<Collection<V>> readUnion(Aggregate aggregate, String... names);
 
     /**
+     * Use {@link #readUnion(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets mapped to weight multiplier
      * and current ScoredSortedSet without state change.
      * <p>
@@ -1238,9 +1323,12 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return result of union
      */
+    @Deprecated
     Mono<Collection<V>> readUnion(Map<String, Double> nameWithWeight);
 
     /**
+     * Use {@link #readUnion(SetUnionArgs)} instead.
+     * <p>
      * Union provided ScoredSortedSets mapped to weight multiplier
      * with defined aggregation method
      * and current ScoredSortedSet without state change
@@ -1251,7 +1339,32 @@ public interface RScoredSortedSetReactive<V> extends RExpirableReactive, RSortab
      * @param nameWithWeight - name of ScoredSortedSet mapped to weight multiplier
      * @return result of union
      */
+    @Deprecated
     Mono<Collection<V>> readUnion(Aggregate aggregate, Map<String, Double> nameWithWeight);
+
+    /**
+     * Union provided ScoredSortedSets mapped to weight multiplier
+     * with defined aggregation method
+     * and current ScoredSortedSet without state change
+     * <p>
+     * Requires <b>Redis 6.2.0 and higher.</b>
+     *
+     * @param args object
+     * @return result of union
+     */
+    Mono<Collection<V>> readUnion(SetUnionArgs args);
+
+    /**
+     * Union provided ScoredSortedSets mapped to weight multiplier
+     * with defined aggregation method
+     * and current ScoredSortedSet without state change
+     * <p>
+     * Requires <b>Redis 6.2.0 and higher.</b>
+     *
+     * @param args object
+     * @return result of union entries (value and its score)
+     */
+    Mono<Collection<ScoredEntry<V>>> readUnionEntries(SetUnionArgs args);
 
     /**
      * Diff ScoredSortedSets specified by name

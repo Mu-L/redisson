@@ -391,7 +391,7 @@ public class SentinelConnectionManager extends MasterSlaveConnectionManager {
             return CompletableFuture.completedFuture(null);
         }
 
-        RFuture<List<Map<String, String>>> sentinelsFuture = connection.async(1, cfg.getRetryInterval(), cfg.getTimeout(),
+        RFuture<List<Map<String, String>>> sentinelsFuture = connection.async(1, cfg.getRetryDelay(), cfg.getTimeout(),
                                                                                 StringCodec.INSTANCE, RedisCommands.SENTINEL_SENTINELS, cfg.getMasterName());
         return sentinelsFuture.thenCompose(list -> {
             if (list.isEmpty()) {
@@ -434,7 +434,7 @@ public class SentinelConnectionManager extends MasterSlaveConnectionManager {
     }
 
     private CompletionStage<Void> checkSlavesChange(SentinelServersConfig cfg, RedisConnection connection) {
-        RFuture<List<Map<String, String>>> slavesFuture = connection.async(1, cfg.getRetryInterval(), cfg.getTimeout(),
+        RFuture<List<Map<String, String>>> slavesFuture = connection.async(1, cfg.getRetryDelay(), cfg.getTimeout(),
                                                                             StringCodec.INSTANCE, RedisCommands.SENTINEL_SLAVES, cfg.getMasterName());
         return slavesFuture.thenCompose(slavesMap -> {
             Set<RedisURI> currentSlaves = Collections.newSetFromMap(new ConcurrentHashMap<>(slavesMap.size()));
@@ -470,6 +470,9 @@ public class SentinelConnectionManager extends MasterSlaveConnectionManager {
                         .thenCompose(res -> {
                             InetSocketAddress slaveAddr = slaveAddrFuture.getNow(null);
                             InetSocketAddress masterAddr = masterAddrFuture.getNow(null);
+                            if (flags.contains("promoted")) {
+                                return CompletableFuture.completedFuture(res);
+                            }
                             if (isSlaveDown(flags, masterLinkStatus)) {
                                 slaveDown(slaveAddr);
                                 return CompletableFuture.completedFuture(res);
@@ -503,7 +506,7 @@ public class SentinelConnectionManager extends MasterSlaveConnectionManager {
     }
 
     private CompletionStage<RedisClient> checkMasterChange(SentinelServersConfig cfg, RedisConnection connection) {
-        RFuture<RedisURI> masterFuture = connection.async(1, cfg.getRetryInterval(), cfg.getTimeout(),
+        RFuture<RedisURI> masterFuture = connection.async(1, cfg.getRetryDelay(), cfg.getTimeout(),
                                                             StringCodec.INSTANCE, masterHostCommand, cfg.getMasterName());
         return masterFuture
                 .thenCompose(u -> resolveIP(u.getHost(), "" + u.getPort()))

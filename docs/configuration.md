@@ -157,6 +157,14 @@ Default value: RESP2
 
 Defines the Redis or Valkey protocol version. Available values: `RESP2`, `RESP3`
 
+**valkeyCapabilities**
+
+Default value: EMPTY
+
+Allows to declare which Valkey capabilities should be supported. Available values: 
+
+- `REDIRECT` - This option indicates that the client is capable of handling redirect messages.
+
 **lockWatchdogTimeout**
 
 Default value: `30000`
@@ -201,7 +209,7 @@ Available implementations:
 
 **useScriptCache**
 
-Default value: `false`
+Default value: `true`
 
 Defines whether to use the Lua-script cache on the Redis or Valkey side. Most Redisson methods are Lua-script-based, and turning this setting on could increase the speed of such methods' execution and save network traffic.
 
@@ -231,13 +239,31 @@ Default value: `100`
 Defines the amount of expired keys deleted per single operation during the cleanup process of expired entries. Applied to `JCache`, `RSetCache`, `RClusteredSetCache`, `RMapCache`, `RListMultimapCache`, `RSetMultimapCache`, `RLocalCachedMapCache`,
 `RClusteredLocalCachedMapCache` objects.
 
+**useThreadClassLoader**
+
+Default value: `true`  
+
+Defines whether to supply ContextClassLoader of the current Thread to Codec. 
+
+Usage of `Thread.getContextClassLoader()` may resolve `ClassNotFoundException` errors arising during Redis or Valkey response decoding. This error might occurr if Redisson is used in both Tomcat and deployed application.
+
+**registrationKey**
+
+_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._  
+
+Defines the license key for the Redisson PRO version. Open source version doesn't require it.
+
+Can be defined as `redisson.pro.key` system property. Example of definition in JVM command-line:
+
+`java ... -Dredisson.pro.key=YYYYY`
+
 **meterMode**
+
+_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._  
 
 Default value: `ALL`
 
 Defines the Micrometer statistics collection mode.
-
-_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._  
 
 Available values:  
 
@@ -248,27 +274,19 @@ Available values:
 
 **meterRegistryProvider**
 
+_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._  
+
 Default value: `null`
 
 Defines the Micrometer registry provider used to collect various statistics for Redisson objects. Please refer to the [statistics monitoring](observability.md) sections for list of all available providers.
 
-_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._  
-
-**useThreadClassLoader**
-
-Default value: `true`  
-
-Defines whether to supply ContextClassLoader of the current Thread to Codec. 
-
-Usage of `Thread.getContextClassLoader()` may resolve `ClassNotFoundException` errors arising during Redis or Valkey response decoding. This error might occurr if Redisson is used in both Tomcat and deployed application.
-
 **performanceMode**
+
+_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._  
 
 Default value: `LOWER_LATENCY_MODE_2`
 
 Defines the command processing engine performance mode. Since all values are application-specific (except for the `NORMAL` value) it’s recommended to try all of them.
-
-_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._
 
 Available values:  
 
@@ -335,19 +353,20 @@ Default value: `1000`
 Scan interval in milliseconds. Applied to Redis or Valkey clusters topology scans.
 
 **topicSlots**
+
+_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._
+
 Default value: `9`
 
 Partitions amount used for topic partitioning. Applied to `RClusteredTopic` and `RClusteredReliableTopic` objects.
 
-_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._
-
 **slots**
+
+_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._
 
 Default value: `231`
 
 Partitions amount used for data partitioning. Data partitioning supported by [Set](data-and-services/collections.md/#eviction-and-data-partitioning), [Map](data-and-services/collections.md/#eviction-local-cache-and-data-partitioning), [BitSet](data-and-services/objects.md/#data-partitioning), [Bloom filter](data-and-services/objects.md/#data-partitioning_1), [Spring Cache](cache-api-implementations.md/#eviction-local-cache-and-data-partitioning), [JCache](cache-api-implementations.md/#local-cache-and-data-partitioning), [Micronaut Cache](cache-api-implementations.md/#eviction-local-cache-and-data-partitioning_4), [Quarkus Cache](cache-api-implementations.md/#eviction-local-cache-and-data-partitioning_3) and [Hibernate Cache](cache-api-implementations.md/#eviction-local-cache-and-data-partitioning_1) structures.
-
-_This setting is available only in [Redisson PRO](https://redisson.pro/feature-comparison.html) edition._
 
 **readMode**
 
@@ -444,16 +463,37 @@ Redis or Valkey server response timeout in milliseconds. Starts countdown after 
 
 **retryAttempts**
 
-Default value: `3`
+Default value: `4`
 
 Error will be thrown if Redis or Valkey command can’t be sent to server
-after *retryAttempts*. But if it sent successfully then *timeout* will be started.
+after *retryAttempts*. But if it was sent successfully then *timeout* will be started.
 
-**retryInterval**
+**retryDelay**
 
-Default value: `1500`
+Default value: `EqualJitterDelay(Duration.ofSeconds(1), Duration.ofSeconds(2))`
 
-Time interval in milliseconds, after which another attempt to send a Redis or Valkey command will be executed.
+Defines the delay strategy for a new attempt to send a command.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
+
+**reconnectionDelay**
+
+Default value: `EqualJitterDelay(Duration.ofMillis(100), Duration.ofSeconds(10))`
+
+Defines the delay strategy for a new attempt to reconnect a connection.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
+
 
 **failedSlaveReconnectionInterval**
 
@@ -656,8 +696,9 @@ clusterServersConfig:
   idleConnectionTimeout: 10000
   connectTimeout: 10000
   timeout: 3000
-  retryAttempts: 3
-  retryInterval: 1500
+  retryAttempts: 4
+  retryDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT1S, maxDelay: PT2S}
+  reconnectionDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT0.1S, maxDelay: PT10S}
   failedSlaveReconnectionInterval: 3000
   failedSlaveNodeDetector: !<org.redisson.client.FailedConnectionDetector> {}
   password: null
@@ -829,17 +870,37 @@ Redis or Valkey server response timeout. It starts to count down after a Redis o
 
 **retryAttempts**
 
-Default value: `3`
+Default value: `4`
 
 An error will be thrown if a Redis or Valkey command can’t be sent to Redis or Valkey server
 after *retryAttempts*. But if it is sent successfully, then *timeout* will be
 started.
 
-**retryInterval**
+**retryDelay**
 
-Default value: `1500`
+Default value: `EqualJitterDelay(Duration.ofSeconds(1), Duration.ofSeconds(2))`
 
-Time interval after which another attempt to send a Redis or Valkey command will be executed. Value in milliseconds. 
+Defines the delay strategy for a new attempt to send a command.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
+
+**reconnectionDelay**
+
+Default value: `EqualJitterDelay(Duration.ofMillis(100), Duration.ofSeconds(10))`
+
+Defines the delay strategy for a new attempt to reconnect a connection.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
 
 **failedSlaveReconnectionInterval**
 
@@ -998,8 +1059,9 @@ replicatedServersConfig:
   idleConnectionTimeout: 10000
   connectTimeout: 10000
   timeout: 3000
-  retryAttempts: 3
-  retryInterval: 1500
+  retryAttempts: 4
+  retryDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT1S, maxDelay: PT2S}
+  reconnectionDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT0.1S, maxDelay: PT10S}
   failedSlaveReconnectionInterval: 3000
   failedSlaveNodeDetector: !<org.redisson.client.FailedConnectionDetector> {}
   password: null
@@ -1117,16 +1179,36 @@ Redis or Valkey server response timeout. It starts to count down once a Redis or
 
 **retryAttempts**
 
-Default value: `3`
+Default value: `4`
 
 Error will be thrown if Redis or Valkey command can’t be sent to Redis or Valkey server
 after the defined *retryAttempts*. But if it is sent successfully, then *timeout* will be started.
 
-**retryInterval**
+**retryDelay**
 
-Default value: `1500`
+Default value: `EqualJitterDelay(Duration.ofSeconds(1), Duration.ofSeconds(2))`
 
-Time interval after which another attempt to send the Redis or Valkey command will be executed. Value in milliseconds. 
+Defines the delay strategy for a new attempt to send a command.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
+
+**reconnectionDelay**
+
+Default value: `EqualJitterDelay(Duration.ofMillis(100), Duration.ofSeconds(10))`
+
+Defines the delay strategy for a new attempt to reconnect a connection.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
 
 **database**
 
@@ -1274,8 +1356,9 @@ singleServerConfig:
   idleConnectionTimeout: 10000
   connectTimeout: 10000
   timeout: 3000
-  retryAttempts: 3
-  retryInterval: 1500
+  retryAttempts: 4
+  retryDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT1S, maxDelay: PT2S}
+  reconnectionDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT0.1S, maxDelay: PT10S}
   password: null
   subscriptionsPerConnection: 5
   clientName: null
@@ -1442,15 +1525,35 @@ Redis or Valkey server response timeout. Starts to count down when a command was
 
 **retryAttempts**
 
-Default value: `3`
+Default value: `4`
 
-Error will be thrown if Redis or Valkey command can’t be sent to Redis server after *retryAttempts*. But if it sent successfully then *timeout* will be started.
+Error will be thrown if Redis or Valkey command can’t be sent to Redis server after *retryAttempts*. But if it was sent successfully then *timeout* will be started.
 
-**retryInterval**
+**retryDelay**
 
-Default value: `1500`
+Default value: `EqualJitterDelay(Duration.ofSeconds(1), Duration.ofSeconds(2))`
 
-Time interval after which another one attempt to send Redis or Valkey command will be executed. Value in milliseconds. 
+Defines the delay strategy for a new attempt to send a command.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
+
+**reconnectionDelay**
+
+Default value: `EqualJitterDelay(Duration.ofMillis(100), Duration.ofSeconds(10))`
+
+Defines the delay strategy for a new attempt to reconnect a connection.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
 
 **failedSlaveReconnectionInterval**
 
@@ -1650,8 +1753,9 @@ sentinelServersConfig:
   idleConnectionTimeout: 10000
   connectTimeout: 10000
   timeout: 3000
-  retryAttempts: 3
-  retryInterval: 1500
+  retryAttempts: 4
+  retryDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT1S, maxDelay: PT2S}
+  reconnectionDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT0.1S, maxDelay: PT10S}
   failedSlaveReconnectionInterval: 3000
   failedSlaveNodeDetector: !<org.redisson.client.FailedConnectionDetector> {}
   password: null
@@ -1810,15 +1914,35 @@ Redis or Valkey server response timeout. Starts to count down when a command was
 
 **retryAttempts**
 
-Default value: `3`
+Default value: `4`
 
-Error will be thrown if Redis or Valkey command can’t be sent to server after *retryAttempts*. But if it sent successfully then *timeout* will be started.
+Error will be thrown if Redis or Valkey command can’t be sent to server after *retryAttempts*. But if it was sent successfully then *timeout* will be started.
 
-**retryInterval**
+**retryDelay**
 
-Default value: `1500`
+Default value: `EqualJitterDelay(Duration.ofSeconds(1), Duration.ofSeconds(2))`
 
-Time interval after which another one attempt to send Redis or Valkey command will be executed. Value in milliseconds. 
+Defines the delay strategy for a new attempt to send a command.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
+
+**reconnectionDelay**
+
+Default value: `EqualJitterDelay(Duration.ofMillis(100), Duration.ofSeconds(10))`
+
+Defines the delay strategy for a new attempt to reconnect a connection.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
 
 **failedSlaveReconnectionInterval**
 
@@ -1986,8 +2110,9 @@ masterSlaveServersConfig:
   idleConnectionTimeout: 10000
   connectTimeout: 10000
   timeout: 3000
-  retryAttempts: 3
-  retryInterval: 1500
+  retryAttempts: 4
+  retryDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT1S, maxDelay: PT2S}
+  reconnectionDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT0.1S, maxDelay: PT10S}
   failedSlaveReconnectionInterval: 3000
   failedSlaveNodeDetector: !<org.redisson.client.FailedConnectionDetector> {}
   password: null
@@ -2140,15 +2265,35 @@ Redis or Valkey server response timeout. Starts to count down when a command was
 
 **retryAttempts**
 
-Default value: `3`
+Default value: `4`
 
-Error will be thrown if Redis or Valkey  ommand can’t be sent to a server after *retryAttempts*. But if it sent successfully then *timeout* will be started.
+Error will be thrown if Redis or Valkey  ommand can’t be sent to a server after *retryAttempts*. But if it was sent successfully then *timeout* will be started.
 
-**retryInterval**
+**retryDelay**
 
-Default value: `1500`
+Default value: `EqualJitterDelay(Duration.ofSeconds(1), Duration.ofSeconds(2))`
 
-Time interval after which another one attempt to send Redis or Valkey command will be executed. Value in milliseconds. 
+Defines the delay strategy for a new attempt to send a command.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
+
+**reconnectionDelay**
+
+Default value: `EqualJitterDelay(Duration.ofMillis(100), Duration.ofSeconds(10))`
+
+Defines the delay strategy for a new attempt to reconnect a connection.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
 
 **database**
 
@@ -2327,8 +2472,9 @@ proxyServersConfig:
   idleConnectionTimeout: 10000
   connectTimeout: 10000
   timeout: 3000
-  retryAttempts: 3
-  retryInterval: 1500
+  retryAttempts: 4
+  retryDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT1S, maxDelay: PT2S}
+  reconnectionDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT0.1S, maxDelay: PT10S}
   password: null
   subscriptionsPerConnection: 5
   clientName: null
@@ -2530,15 +2676,35 @@ Redis or Valkey server response timeout in milliseconds. Starts to count down wh
 
 **retryAttempts**
 
-Default value: `3`
+Default value: `4`
 
-Error will be thrown if Redis or Valkey command can’t be sent to a server after *retryAttempts*. But if it sent successfully then *timeout* will be started.
+Error will be thrown if Redis or Valkey command can’t be sent to a server after *retryAttempts*. But if it was sent successfully then *timeout* will be started.
 
-**retryInterval**
+**retryDelay**
 
-Default value: `1500`
+Default value: `EqualJitterDelay(Duration.ofSeconds(1), Duration.ofSeconds(2))`
 
-Time interval in milliseconds after which another one attempt to send Redis or Valkey command will be executed.
+Defines the delay strategy for a new attempt to send a command.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
+
+**reconnectionDelay**
+
+Default value: `EqualJitterDelay(Duration.ofMillis(100), Duration.ofSeconds(10))`
+
+Defines the delay strategy for a new attempt to reconnect a connection.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
 
 **failedSlaveReconnectionInterval**
 
@@ -2709,8 +2875,9 @@ multiClusterServersConfig:
   idleConnectionTimeout: 10000
   connectTimeout: 10000
   timeout: 3000
-  retryAttempts: 3
-  retryInterval: 1500
+  retryAttempts: 4
+  retryDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT1S, maxDelay: PT2S}
+  reconnectionDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT0.1S, maxDelay: PT10S}
   failedSlaveReconnectionInterval: 3000
   failedSlaveNodeDetector: !<org.redisson.client.FailedConnectionDetector> {}
   password: null
@@ -2900,15 +3067,35 @@ Redis or Valkey server response timeout. Starts to count down when a command was
 
 **retryAttempts**
 
-Default value: `3`
+Default value: `4`
 
-Error will be thrown if Redis or Valkey command can’t be sent to a server after *retryAttempts*. But if it sent successfully then *timeout* will be started.
+Error will be thrown if Redis or Valkey command can’t be sent to a server after *retryAttempts*. But if it was sent successfully then *timeout* will be started.
 
-**retryInterval**
+**retryDelay**
 
-Default value: `1500`
+Default value: `EqualJitterDelay(Duration.ofSeconds(1), Duration.ofSeconds(2))`
 
-Time interval after which another one attempt to send Redis or Valkey command will be executed. Value in milliseconds.
+Defines the delay strategy for a new attempt to send a command.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
+
+**reconnectionDelay**
+
+Default value: `EqualJitterDelay(Duration.ofMillis(100), Duration.ofSeconds(10))`
+
+Defines the delay strategy for a new attempt to reconnect a connection.
+
+Available implementations:  
+
+* `org.redisson.config.DecorrelatedJitterDelay` - Decorrelated jitter strategy that increases delay exponentially while introducing randomness influenced by the previous backoff duration.
+* `org.redisson.config.EqualJitterDelay` - Equal jitter strategy that introduces moderate randomness while maintaining some stability of delay value.
+* `org.redisson.config.FullJitterDelay` - Full jitter strategy that applies complete randomization to the exponential backoff delay.
+* `org.redisson.config.ConstantDelay` - A constant delay strategy that returns the same delay duration for every retry attempt.
 
 
 **failedSlaveReconnectionInterval**
@@ -3102,8 +3289,9 @@ multiSentinelServersConfig:
   idleConnectionTimeout: 10000
   connectTimeout: 10000
   timeout: 3000
-  retryAttempts: 3
-  retryInterval: 1500
+  retryAttempts: 4
+  retryDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT1S, maxDelay: PT2S}
+  reconnectionDelay: !<org.redisson.config.EqualJitterDelay> {baseDelay: PT0.1S, maxDelay: PT10S}
   failedSlaveReconnectionInterval: 3000
   failedSlaveNodeDetector: !<org.redisson.client.FailedConnectionDetector> {}
   password: null

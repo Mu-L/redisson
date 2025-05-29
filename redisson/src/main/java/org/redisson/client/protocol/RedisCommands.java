@@ -17,6 +17,7 @@ package org.redisson.client.protocol;
 
 import org.redisson.api.*;
 import org.redisson.api.search.index.IndexInfo;
+import org.redisson.api.vector.VectorInfo;
 import org.redisson.client.codec.Codec;
 import org.redisson.client.codec.DoubleCodec;
 import org.redisson.client.codec.StringCodec;
@@ -33,6 +34,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 
@@ -40,6 +42,48 @@ import java.util.stream.Collectors;
  *
  */
 public interface RedisCommands {
+
+    RedisCommand<Boolean> VADD = new RedisCommand<>("VADD", new BooleanReplayConvertor());
+    RedisCommand<Integer> VCARD = new RedisCommand<>("VCARD", new IntegerReplayConvertor());
+    RedisCommand<Integer> VDIM = new RedisCommand<>("VDIM", new IntegerReplayConvertor());
+    RedisCommand<List<Double>> VEMB = new RedisCommand<>("VEMB", new ObjectListReplayDecoder(), new EmptyListConvertor());
+    RedisCommand<List<Object>> VEMB_RAW = new RedisCommand<>("VEMB", new ListMultiDecoder2(new ObjectListReplayDecoder()), new EmptyListConvertor());
+    RedisCommand<String> VGETATTR = new RedisCommand<>("VGETATTR");
+    RedisCommand<VectorInfo> VINFO = new RedisCommand("VINFO", new VectorInfoDecoder());
+    RedisCommand<List<String>> VLINKS = new RedisCommand("VLINKS", new StringListListReplayDecoder() {
+        @Override
+        public List<String> decode(List<Object> parts, State state) {
+            return (List<String>) (Object) parts.stream().flatMap(v -> {
+                if (v instanceof List) {
+                    return ((List<?>) v).stream();
+                }
+                return Stream.of(v);
+            }).collect(Collectors.toList());
+        }
+    }, new EmptyListConvertor());
+    RedisCommand<List<ScoredEntry<String>>> VLINKS_WITHSCORES = new RedisCommand<>("VLINKS", new ScoredSortedSetReplayDecoder() {
+        @Override
+        public List<ScoredEntry> decode(List parts, State state) {
+            List pp = (List) parts.stream().flatMap(v -> {
+                if (v instanceof List) {
+                    return ((List) v).stream();
+                }
+                return Stream.of(v);
+            }).collect(Collectors.toList());
+            if (!pp.isEmpty()) {
+                if (pp.get(0) instanceof ScoredEntry) {
+                    return pp;
+                }
+            }
+            return super.decode(pp, state);
+        }
+    }, new EmptyListConvertor());
+    RedisCommand<String> VRANDMEMBER = new RedisCommand<>("VRANDMEMBER");
+    RedisCommand<List<String>> VRANDMEMBER_MULTI = new RedisCommand<>("VRANDMEMBER", new ListMultiDecoder2(new StringListReplayDecoder()));
+    RedisCommand<Boolean> VREM = new RedisCommand<>("VREM", new BooleanReplayConvertor());
+    RedisCommand<Boolean> VSETATTR = new RedisCommand<>("VSETATTR", new BooleanReplayConvertor());
+    RedisCommand<List<String>> VSIM = new RedisCommand<>("VSIM", new ListMultiDecoder2(new StringListReplayDecoder()));
+    RedisCommand<List<ScoredEntry<String>>> VSIM_WITHSCORES = new RedisCommand<>("VSIM", new ScoredSortedSetReplayDecoder());
 
     RedisStrictCommand<Void> DEBUG = new RedisStrictCommand<Void>("DEBUG");
     
@@ -94,7 +138,16 @@ public interface RedisCommands {
             new ListMultiDecoder2(new CodecDecoder(), new ScoredSortedSetReplayDecoderV2<>()));
 
     RedisCommand<List<Object>> ZUNION = new RedisCommand<>("ZUNION", new ObjectListReplayDecoder<>());
+    RedisCommand<List<ScoredEntry<Object>>> ZUNION_ENTRY = new RedisCommand("ZUNION", new ScoredSortedSetReplayDecoder<Object>());
+    RedisCommand<List<ScoredEntry<Object>>> ZUNION_ENTRY_V2 = new RedisCommand("ZUNION",
+            new ListMultiDecoder2(new CodecDecoder(), new ScoredSortedSetReplayDecoderV2<>()));
+
     RedisCommand<List<Object>> ZINTER = new RedisCommand<>("ZINTER", new ObjectListReplayDecoder<>());
+
+    RedisCommand<List<ScoredEntry<Object>>> ZINITER_ENTRY = new RedisCommand("ZINTER", new ScoredSortedSetReplayDecoder<Object>());
+    RedisCommand<List<ScoredEntry<Object>>> ZINITER_ENTRY_V2 = new RedisCommand("ZINTER",
+            new ListMultiDecoder2(new CodecDecoder(), new ScoredSortedSetReplayDecoderV2<>()));
+
     RedisStrictCommand<Integer> ZINTERCARD_INT = new RedisStrictCommand<>("ZINTERCARD", new IntegerReplayConvertor());
     RedisStrictCommand<Integer> ZDIFFSTORE_INT = new RedisStrictCommand<Integer>("ZDIFFSTORE", new IntegerReplayConvertor());
     RedisStrictCommand<Integer> ZUNIONSTORE_INT = new RedisStrictCommand<Integer>("ZUNIONSTORE", new IntegerReplayConvertor());
@@ -505,6 +558,7 @@ public interface RedisCommands {
 
     RedisStrictCommand<Void> CLIENT_TRACKING = new RedisStrictCommand<Void>("CLIENT", "TRACKING", new VoidReplayConvertor());
 
+    RedisStrictCommand<Void> CLIENT_CAPA = new RedisStrictCommand<Void>("CLIENT", "CAPA", new VoidReplayConvertor());
     RedisStrictCommand<Void> CLIENT_SETNAME = new RedisStrictCommand<Void>("CLIENT", "SETNAME", new VoidReplayConvertor());
     RedisStrictCommand<String> CLIENT_GETNAME = new RedisStrictCommand<String>("CLIENT", "GETNAME", new ObjectDecoder(new StringDataDecoder()));
     RedisStrictCommand<Void> FLUSHDB = new RedisStrictCommand<Void>("FLUSHDB", new VoidReplayConvertor());

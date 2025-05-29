@@ -422,6 +422,9 @@ public class CommandDecoder extends ReplayingDecoder<State> {
             } else if (error.startsWith("READONLY")) {
                 data.tryFailure(new RedisReadonlyException(error
                         + ". channel: " + channel + " data: " + data));
+            } else if (error.startsWith("NOSCRIPT")) {
+                data.tryFailure(new RedisNoScriptException(error
+                        + ". channel: " + channel + " data: " + data));
             }  else if (error.startsWith("NOREPLICAS")) {
                 data.tryFailure(new RedisNoReplicasException(error
                         + ". channel: " + channel + " data: " + data));
@@ -471,6 +474,13 @@ public class CommandDecoder extends ReplayingDecoder<State> {
             decodeList(in, data, parts, channel, size, respParts, skipConvertor, commandsData, state);
 
             state.decLevel();
+        } else if (code == '#') {
+            String r = readString(in, StandardCharsets.US_ASCII);
+            if ("t".equals(r)) {
+                handleResult(data, parts, 1L, false);
+            } else {
+                handleResult(data, parts, 0L, false);
+            }
         } else {
             String dataStr = in.toString(0, in.writerIndex(), CharsetUtil.UTF_8);
             throw new IllegalStateException("Can't decode replay: " + dataStr);

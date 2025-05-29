@@ -3,6 +3,58 @@ Redisson Releases History
 
 Upgrade to __[Redisson PRO](https://redisson.pro)__ with **advanced features**.
 
+### 27-May-2025 - 3.48.0 released
+
+Feature - `retryDelay` and `reconnectionDelay` [settings](https://redisson.pro/docs/api-models/#command-execution-reliability) added, allowing to define a delay strategy. Available implementations: `FullJitterDelay`, `EqualJitterDelay`, `DecorrelatedJitterDelay` and `ConstantDelay`. Default is `EqualJitterDelay`  
+Feature - [Vector Set](https://redisson.pro/docs/data-and-services/collections/#vector-set) object added  
+Feature - Spring Data Redis 3.5.0 implementation  
+Feature - Hibernate 7 support added  
+
+Improvement - `RClusteredMapCache` eviction process optimization  
+
+Fixed - `RLocalCachedMap` with `storeMode = LOCALCACHE` may allocate extra connections and miss updates if `syncStrategy = UPDATE`  
+Fixed - `RClusteredLocalCachedMap` with `storeMode = LOCALCACHE` may allocate extra connections and miss updates if `syncStrategy = UPDATE`  
+Fixed - `RLocalCachedMapCacheV2` with `storeMode = LOCALCACHE` may allocate extra connections and miss updates if `syncStrategy = UPDATE`  
+Fixed - `RLocalCachedMapCacheV2` local cache updates  
+Fixed - `QueueTransferTask` throws NPE  
+Fixed - unknown command error is thrown if `RLock` object is used on Valkey Serverless deployment  
+Fixed - the count parameter of `RMap.valuesAsync()` method should not affect result  
+Fixed - `NOSCRIPT` error is thrown after failover by `RLock` methods  
+Fixed - RESP3 boolean value parsing  
+
+### 21-May-2025 - 3.47.0 released
+
+Feature - [ReliableFanout](https://redisson.pro/docs/data-and-services/queues/#reliable-fanout) object added  
+Feature - [processingMode](https://redisson.pro/docs/data-and-services/queues/#configuration) setting added to `RReliableQueue` config  
+Feature - [listeners](https://redisson.pro/docs/data-and-services/queues/#listeners) added to `RReliableQueue` object  
+Feature - [metrics](https://redisson.pro/docs/data-and-services/queues/#metrics) added to `RReliableQueue` object  
+Feature - `disableOperation()` and `enableOperation()` methods added to `RReliableQueue` object  
+Feature - `get()` and `getAll()` methods added to `RReliableQueue` object  
+Feature - `pollBatchSize`, `visibilityTimeout`, `negativeAcknowledgeDelay` consumer settings added to Spring Cloud Stream Binder  
+Feature - `RReliableQueue` implements `RDestroyable` interface  
+Feature - `readDiffEntries()`, `readIntersectionEntries()`, `readUnionEntries()` methods added to RScoredSortedSet (thanks to @seakider)  
+Feature - `valkeyCapabilities` setting added  
+
+Improvement - script logging in error message if useScriptCache = true  
+Improvement - `RReliableQueue` data structure optimization  
+
+Fixed - RClusteredLocalCachedMap.fastPut() method causes netty buffer leak if `storeMode = LOCALCACHE`  
+Fixed - `RReliableQueue.size()` method result shouldn't include delayed messages amount  
+Fixed - Spring Cache.getNativeCache() returns incorrect instance  
+Fixed - exessive connections creation for RClusteredLocalCachedMap and RClusteredLocalCachedMapCache if 'reconnectionStrategy = LOAD'  
+Fixed - readUnion(), readIntersection(), readDiff() methods of RSetCache throw exception  
+Fixed - New connection opened for each write operation after failover in Sentinel mode (thanks to @seakider)  
+Fixed - Micronaut 4.x connects only to a single node  
+Fixed - RedisURI(String) constructor doesn't set the hashCode  
+Fixed - Spring Data Redis `addMessageListener()` method hangs if multiple listeners added to the same topic or pattern  
+Fixed - detection of `WAIT` and `WAITAOF` commands availability  
+Fixed - JCacheManager does not remove cache instance from map when calling closeCache() (thanks to @seakider)  
+Fixed - starvation of pub/sub connections may cause a memory leak  
+Fixed - `RMap.loadAll()` method may hang in Cluster  
+Fixed - `None of slaves were synced` exception is thrown  
+Fixed - Spring Data Redis `ReactiveZSetCommands.zadd()` default param (thanks to @lookroot)  
+
+
 ### 29-Apr-2025 - 3.46.0 released
 
 Feature - [Reliable Queue](https://redisson.pro/docs/data-and-services/queues/#reliable-queue) object added. `RDelayedQueue` and `RBoundedBlockingQueue` have been deprecated  
