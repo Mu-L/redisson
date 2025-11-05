@@ -379,20 +379,22 @@
         </dependency>
 
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.5</version>
         </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
@@ -424,10 +426,6 @@
             <artifactId>jackson-dataformat-avro</artifactId>
             <scope>provided</scope>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         <dependency>
             <groupId>net.bytebuddy</groupId>
@@ -560,7 +558,7 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <DynamicImport-Package>*</DynamicImport-Package>
-                        <Import-Package>jdk.net;resolution:=optional,javax.cache.*;resolution:=optional,io.reactivex.rxjava3.*;resolution:=optional,jodd.*;resolution:=optional,net.bytebuddy.*;resolution:=optional,org.jboss.marshalling.*;resolution:=optional,org.springframework.*;resolution:=optional,io.projectreactor.*;resolution:=optional,*</Import-Package>
+                        <Import-Package>jdk.net;resolution:=optional,javax.cache.*;resolution:=optional,io.reactivex.rxjava3.*;resolution:=optional,net.bytebuddy.*;resolution:=optional,org.jboss.marshalling.*;resolution:=optional,org.springframework.*;resolution:=optional,io.projectreactor.*;resolution:=optional,*</Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
