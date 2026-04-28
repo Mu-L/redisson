@@ -8,6 +8,7 @@ import org.redisson.client.RedisException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,6 +24,24 @@ public class RedissonBloomFilterTest extends RedisDockerTest {
         assertThat(filter.add(list)).isEqualTo(3);
         assertThat(filter.contains(list)).isEqualTo(3);
         assertThat(filter.contains(Arrays.asList("1", "5"))).isEqualTo(1);
+    }
+
+    @Test
+    public void testExistsAll() {
+        RBloomFilter<String> filter = redisson.getBloomFilter("filter");
+        filter.tryInit(100, 0.03);
+
+        List<String> list = Arrays.asList("1", "2", "3");
+        assertThat(filter.exists(list).size()).isEqualTo(0);
+
+        assertThat(filter.add(list)).isEqualTo(3);
+        assertThat(filter.exists(list).size()).isEqualTo(3);
+
+        Set<String> allExists = filter.exists(list);
+        assertThat(allExists).isEqualTo(Set.of("1", "2", "3"));
+
+        Set<String> partialExists = filter.exists(Arrays.asList("1", "5"));
+        assertThat(partialExists).isEqualTo(Set.of("1"));
     }
 
     @Test
