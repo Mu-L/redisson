@@ -37,6 +37,7 @@ import org.redisson.client.codec.LongCodec;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.client.protocol.RedisCommand;
 import org.redisson.client.protocol.RedisCommands;
+import org.redisson.client.protocol.decoder.ContainsSetDecoder;
 import org.redisson.client.protocol.decoder.ObjectMapReplayDecoder;
 import org.redisson.command.CommandAsyncExecutor;
 import org.redisson.misc.CompletableFutureWrapper;
@@ -225,6 +226,74 @@ public class RedissonBloomFilter<T> extends RedissonExpirable implements RBloomF
     @Override
     public long contains(Collection<T> objects) {
         return get(containsAsync(objects));
+    }
+
+    @Override
+    public Set<T> exists(Collection<T> elements) {
+        return get(existsAsync(elements));
+    }
+
+    @Override
+    public RFuture<Set<T>> existsAsync(Collection<T> elements) {
+        if (elements == null || elements.isEmpty()) {
+            return new CompletableFutureWrapper<>(CompletableFuture.completedFuture(Collections.emptySet()));
+        }
+
+        List<T> elementList = new ArrayList<>(elements);
+        CompletionStage<Set<T>> f = CompletableFuture.completedFuture(null);
+        if (size == 0) {
+            f = readConfigAsync().<Set<T>>handle((r, e) -> {
+                if (e != null) {
+                    return Collections.emptySet();
+                }
+                return null;
+            });
+        }
+
+        f = f.thenCompose(r -> {
+            if (r != null) {
+                return CompletableFuture.completedFuture(r);
+            }
+
+            List<Long> allIndexes = index(elementList);
+
+            List<Object> params = new ArrayList<>();
+            params.add(size);
+            params.add(hashIterations);
+            params.add(elementList.size());
+            params.addAll(allIndexes);
+
+            return commandExecutor.<Set<T>, Set<T>>evalWriteAsync(getRawName(), LongCodec.INSTANCE,
+                    new RedisCommand<>("EVAL", new ContainsSetDecoder<>(elementList)),
+                    "local size = redis.call('hget', KEYS[1], 'size');" +
+                          "local hashIterations = redis.call('hget', KEYS[1], 'hashIterations');" +
+                          "if size ~= ARGV[1] or hashIterations ~= ARGV[2] then " +
+                              "return {};" +
+                          "end;" +
+
+                          "local result = {};" +
+                          "local k = 0;" +
+                          "local cc = (#ARGV - 3) / ARGV[3];" +
+                          "for i = 4, #ARGV, 1 do " +
+                              "local r = redis.call('getbit', KEYS[2], ARGV[i]); " +
+                              "if r == 0 then " +
+                                  "k = k + 1;" +
+                              "end; " +
+                              "if ((i - 4) + 1) % cc == 0 then " +
+                                  "if k == 0 then " +
+                                      "table.insert(result, 1);" +
+                                  "else " +
+                                      "table.insert(result, 0);" +
+                                  "end; " +
+                                  "k = 0; " +
+                              "end; " +
+                          "end; " +
+                          "return result;",
+                    Arrays.asList(configName, getRawName()),
+                    params.toArray()).toCompletableFuture();
+        });
+
+        return new CompletableFutureWrapper<>(f);
     }
 
     List<Long> index(Collection<T> objects) {
