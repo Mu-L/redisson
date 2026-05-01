@@ -358,6 +358,7 @@ public class RedissonFairLockTest extends BaseConcurrentTest {
         fourthTTL = lock.tryLockInnerAsync(5000, leaseTime, TimeUnit.MILLISECONDS, threadFourthWaiter, RedisCommands.EVAL_LONG).toCompletableFuture().join();;
         Assertions.assertNotNull(fourthTTL);
         Assertions.assertTrue(fourthTTL >= 29700 && fourthTTL <= 30300, "Expected 35000 +/- 100 but was " + fourthTTL);
+        redisson.shutdown();
     }
 
     @Test
@@ -418,6 +419,7 @@ public class RedissonFairLockTest extends BaseConcurrentTest {
 
         locked = lock.tryLockInnerAsync(5000, leaseTime, TimeUnit.MILLISECONDS, threadThirdWaiter, RedisCommands.EVAL_NULL_BOOLEAN).toCompletableFuture().join();;
         Assertions.assertTrue(locked);
+        redisson.shutdown();
     }
 
     @Test
@@ -472,6 +474,7 @@ public class RedissonFairLockTest extends BaseConcurrentTest {
         thirdTTL = lock.tryLockInnerAsync(5000, leaseTime, TimeUnit.MILLISECONDS, threadThirdWaiter, RedisCommands.EVAL_LONG).toCompletableFuture().join();;
         Assertions.assertNotNull(thirdTTL);
         Assertions.assertTrue(thirdTTL < secondTTLAgain);
+        redisson.shutdown();
     }
 
     @Test
@@ -518,6 +521,7 @@ public class RedissonFairLockTest extends BaseConcurrentTest {
 
         ttl = lock.tryLockInnerAsync(-1, leaseTime, TimeUnit.MILLISECONDS, threadThirdWaiter, RedisCommands.EVAL_LONG).toCompletableFuture().join();;
         Assertions.assertNull(ttl);
+        redisson.shutdown();
     }
 
     @Test
@@ -996,6 +1000,8 @@ public class RedissonFairLockTest extends BaseConcurrentTest {
         Assertions.assertTrue(lock.isLocked());
         lock.unlock();
         Assertions.assertFalse(lock.isLocked());
+
+        redisson.shutdown();
     }
 
 
