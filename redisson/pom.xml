@@ -423,7 +423,6 @@
                         <excludes>
                             <exclude>LRUCacheMapTest</exclude>
                             <exclude>SoftCacheMapTest</exclude>
-                            <exclude>RedissonFairLockTest</exclude>
                             <exclude>RedissonLockHeavyTest</exclude>
 
                             <include>RedissonPriorityBlockingQueueTest</include>
