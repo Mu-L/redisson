@@ -1137,7 +1137,14 @@ public class RedissonExecutorService implements RScheduledExecutorService {
         check(task);
 
         MasterSlaveServersConfig config = commandExecutor.getServiceManager().getConfig();
-        long timeout = (config.getTimeout() + config.getRetryDelay().calcDelay(config.getRetryAttempts()).toMillis()) * config.getRetryAttempts();
+        long timeout = 0;
+        try {
+            long combined = Math.addExact(config.getTimeout(), config.getRetryDelay().calcDelay(config.getRetryAttempts()).toMillis());
+            timeout = Math.multiplyExact(combined, (long) config.getRetryAttempts());
+        } catch (ArithmeticException ex) {
+            timeout = Long.MAX_VALUE;
+            LOGGER.warn("Total timeout calculation overflowed, setting to Long.MAX_VALUE. Check 'timeout', 'retryAttempts' and 'retryDelay' settings.", ex);
+        }
         timeout = Math.max(timeout, 1);
 
         String taskName = tasksLatchName + ":" + id;
