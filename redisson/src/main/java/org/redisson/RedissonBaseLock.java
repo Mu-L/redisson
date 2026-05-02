@@ -220,8 +220,16 @@ public abstract class RedissonBaseLock extends RedissonExpirable implements RLoc
             requestId = getServiceManager().generateId();
         }
         MasterSlaveServersConfig config = getServiceManager().getConfig();
-        long timeout = (config.getTimeout() + config.getRetryDelay().calcDelay(config.getRetryAttempts()).toMillis()) * config.getRetryAttempts();
+        long timeout = 0;
+        try {
+            long combined = Math.addExact(config.getTimeout(), config.getRetryDelay().calcDelay(config.getRetryAttempts()).toMillis());
+            timeout = Math.multiplyExact(combined, (long) config.getRetryAttempts());
+        } catch (ArithmeticException ex) {
+            timeout = Long.MAX_VALUE;
+            log.warn("Total timeout calculation overflowed, setting to Long.MAX_VALUE. Check 'timeout', 'retryAttempts' and 'retryDelay' settings.", ex);
+        }
         timeout = Math.max(timeout, 1);
+
         RFuture<Boolean> r = unlockInnerAsync(threadId, requestId, timeout);
         String id = requestId;
         CompletionStage<Boolean> ff = r.thenApply(v -> {
